@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+<html lang="en" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Haraj - Interactive Prototype</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        haraj: {
+                            blue: '#0F7493',
+                            green: '#15803D',   /* white text = 5.0:1 (WCAG AA); WhatsApp #25D366 was only 1.98:1 */
+                            dark: '#1F2937',
+                            darker: '#111827',
+                            card: '#374151'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        html { font-size: 100%; transition: font-size 0.2s ease-in-out; }
+        body { font-family: 'Cairo', sans-serif; transition: background-color 0.3s, color 0.3s; display: flex; flex-direction: column; align-items: center; padding: 2rem; background-color: #E5E7EB; }
+        .dark body { background-color: #111827; }
+
+        :focus-visible { outline: 3px solid #f59e0b; outline-offset: 2px; }
+
+        .device-mockup {
+            background: #F3F4F6;
+            border: 8px solid #1F2937;
+            border-radius: 24px;
+            width: 1024px;
+            max-width: 100%;
+            height: 768px;
+            overflow-y: auto;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+            position: relative;
+            display: none;
+            transition: background-color 0.3s;
+        }
+        .dark .device-mockup { background: #1F2937; border-color: #374151; }
+
+        .active-screen { display: flex; animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @media (prefers-reduced-motion: reduce) { .active-screen { animation: none; } html { transition: none; } }
+
+        .device-mockup::-webkit-scrollbar { width: 8px; }
+        .device-mockup::-webkit-scrollbar-track { background: transparent; }
+        .device-mockup::-webkit-scrollbar-thumb { background: #9CA3AF; border-radius: 8px; }
+        .dark .device-mockup::-webkit-scrollbar-thumb { background: #6B7280; }
+
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        .clickable { cursor: pointer; transition: transform 0.1s, box-shadow 0.1s; }
+        .clickable:active { transform: scale(0.98); }
+
+        .haraj-logo-img { height: 40px; width: auto; object-fit: contain; }
+        input::placeholder { color: #6B7280; }
+        .dark input::placeholder { color: #9CA3AF; }
+        h1[tabindex="-1"]:focus { outline: none; }
+    </style>
+</head>
+<body class="text-gray-900 dark:text-gray-100">
+
+    <div class="mb-6 text-center">
+        <h1 class="text-3xl font-bold text-gray-800 dark:text-gray-100">Haraj Interactive Prototype</h1>
+        <p class="text-gray-700 dark:text-gray-300 mt-2">Try it: search for <strong>Mazda CX9</strong>, open an ad, or press <strong>Post Ad</strong>. Text size and dark mode are in the header.</p>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- SCREEN 1: HOMEPAGE -->
+    <!-- ========================================== -->
+    <main id="screen-1" class="device-mockup active-screen flex-col" aria-label="Home">
+        <header class="bg-white dark:bg-gray-900 shadow-sm p-4 flex justify-between items-center gap-4 sticky top-0 z-10 border-b dark:border-gray-800 transition-colors">
+            <a href="#" onclick="goHome(); return false;" class="clickable flex items-center gap-4 shrink-0" aria-label="Haraj home">
+                <img src="https://haraj.com.sa/assets/images/logo.svg" data-fallback="logo" alt="Haraj" class="haraj-logo-img dark:brightness-200">
+            </a>
+            <form class="flex-1 max-w-2xl" role="search" onsubmit="return doSearch('q1');">
+                <label for="q1" class="sr-only">Search Haraj</label>
+                <div class="relative">
+                    <input id="q1" type="search" autocomplete="off" placeholder="Search for cars, real estate, devices..." class="w-full ps-4 pe-12 py-3 border dark:border-gray-700 rounded-lg bg-gray-100 dark:bg-gray-800 dark:text-white text-base transition-colors">
+                    <button type="submit" aria-label="Search" class="absolute end-1 top-1 bottom-1 px-3 rounded-md text-haraj-blue dark:text-sky-400 hover:bg-gray-200 dark:hover:bg-gray-700"><i class="fas fa-search" aria-hidden="true"></i></button>
+                </div>
+            </form>
+            <div class="flex items-center gap-3 shrink-0">
+                <button type="button" onclick="showToast('City picker is not part of this prototype')" class="flex items-center gap-1 text-gray-700 dark:text-gray-200 text-base"><i class="fas fa-map-marker-alt text-red-600 dark:text-red-400" aria-hidden="true"></i> Riyadh</button>
+                <div data-a11y></div>
+                <button type="button" onclick="openPost()" class="clickable bg-haraj-blue text-white px-5 py-2.5 rounded-lg font-semibold hover:bg-sky-800 shadow-md"><i class="fas fa-plus" aria-hidden="true"></i> Post Ad</button>
+            </div>
+        </header>
+
+        <div class="p-8">
+            <h1 class="sr-only" tabindex="-1">Haraj home</h1>
+            <nav aria-label="Categories" class="flex items-center mb-10">
+                <button type="button" onclick="scrollCategories(-1)" aria-label="Scroll categories left" class="w-12 h-12 shrink-0 rounded-full bg-white dark:bg-gray-800 shadow flex items-center justify-center text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 z-10"><i class="fas fa-chevron-left" aria-hidden="true"></i></button>
+
+                <div id="categories-scroll" class="flex gap-6 overflow-x-auto no-scrollbar scroll-smooth w-full px-6 py-2">
+                    <a href="#" onclick="showResults({reset:true}); return false;" class="clickable flex-shrink-0 flex flex-col items-center justify-center bg-white dark:bg-gray-800 rounded-2xl shadow-sm hover:shadow-md w-36 h-36 border border-gray-100 dark:border-gray-700 text-haraj-blue dark:text-sky-400 transition-colors">
+                        <i class="fas fa-car text-5xl mb-3" aria-hidden="true"></i><span class="text-lg font-bold text-gray-800 dark:text-gray-100">Cars</span>
+                    </a>
+                    <a href="#" onclick="protoOnly('Devices'); return false;" class="clickable flex-shrink-0 flex flex-col items-center justify-center bg-white dark:bg-gray-800 rounded-2xl shadow-sm hover:shadow-md w-36 h-36 border border-gray-100 dark:border-gray-700 text-haraj-blue dark:text-sky-400 transition-colors">
+                        <i class="fas fa-mobile-alt text-5xl mb-3" aria-hidden="true"></i><span class="text-lg font-bold text-gray-800 dark:text-gray-100">Devices</span>
+                    </a>
+                    <a href="#" onclick="protoOnly('Games'); return false;" class="clickable flex-shrink-0 flex flex-col items-center justify-center bg-white dark:bg-gray-800 rounded-2xl shadow-sm hover:shadow-md w-36 h-36 border border-gray-100 dark:border-gray-700 text-haraj-blue dark:text-sky-400 transition-colors">
+                        <i class="fas fa-gamepad text-5xl mb-3" aria-hidden="true"></i><span class="text-lg font-bold text-gray-800 dark:text-gray-100">Games</span>
+                    </a>
+                    <a href="#" onclick="protoOnly('Real Estate'); return false;" class="clickable flex-shrink-0 flex flex-col items-center justify-center bg-white dark:bg-gray-800 rounded-2xl shadow-sm hover:shadow-md w-36 h-36 border border-gray-100 dark:border-gray-700 text-haraj-blue dark:text-sky-400 transition-colors">
+                        <i class="fas fa-home text-5xl mb-3" aria-hidden="true"></i><span class="text-lg font-bold text-gray-800 dark:text-gray-100">Real Estate</span>
+                    </a>
+                    <a href="#" onclick="protoOnly('Furniture'); return false;" class="clickable flex-shrink-0 flex flex-col items-center justify-center bg-white dark:bg-gray-800 rounded-2xl shadow-sm hover:shadow-md w-36 h-36 border border-gray-100 dark:border-gray-700 text-haraj-blue dark:text-sky-400 transition-colors">
+                        <i class="fas fa-couch text-5xl mb-3" aria-hidden="true"></i><span class="text-lg font-bold text-gray-800 dark:text-gray-100">Furniture</span>
+                    </a>
+                    <a href="#" onclick="protoOnly('Livestock'); return false;" class="clickable flex-shrink-0 flex flex-col items-center justify-center bg-white dark:bg-gray-800 rounded-2xl shadow-sm hover:shadow-md w-36 h-36 border border-gray-100 dark:border-gray-700 text-haraj-blue dark:text-sky-400 transition-colors">
+                        <i class="fas fa-paw text-5xl mb-3" aria-hidden="true"></i><span class="text-lg font-bold text-gray-800 dark:text-gray-100">Livestock</span>
+                    </a>
+                    <a href="#" onclick="protoOnly('Fashion'); return false;" class="clickable flex-shrink-0 flex flex-col items-center justify-center bg-white dark:bg-gray-800 rounded-2xl shadow-sm hover:shadow-md w-36 h-36 border border-gray-100 dark:border-gray-700 text-haraj-blue dark:text-sky-400 transition-colors">
+                        <i class="fas fa-tshirt text-5xl mb-3" aria-hidden="true"></i><span class="text-lg font-bold text-gray-800 dark:text-gray-100">Fashion</span>
+                    </a>
+                </div>
+
+                <button type="button" onclick="scrollCategories(1)" aria-label="Scroll categories right" class="w-12 h-12 shrink-0 rounded-full bg-white dark:bg-gray-800 shadow flex items-center justify-center text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 z-10"><i class="fas fa-chevron-right" aria-hidden="true"></i></button>
+            </nav>
+
+            <h2 class="text-2xl font-bold mb-6 flex items-center gap-2 text-gray-800 dark:text-white"><i class="fas fa-fire text-orange-600 dark:text-orange-400" aria-hidden="true"></i> Trending Items</h2>
+            <div class="grid grid-cols-3 gap-6">
+                <a href="#" onclick="openCar(1); return false;" class="clickable block bg-white dark:bg-gray-800 rounded-xl overflow-hidden shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-lg ring-2 ring-transparent hover:ring-sky-500 transition">
+                    <div class="h-48 bg-gray-200 dark:bg-gray-700 relative">
+                        <img src="https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fit=crop&w=600&q=80" data-fallback="photo" class="w-full h-full object-cover" alt="Toyota Avalon, front view">
+                    </div>
+                    <div class="p-5">
+                        <h3 class="font-bold text-gray-900 dark:text-white truncate text-xl">Toyota Avalon 2023</h3>
+                        <p class="text-haraj-blue dark:text-sky-400 font-bold mt-2 text-2xl">120,000 SR</p>
+                        <p class="text-gray-600 dark:text-gray-300 text-base mt-3"><i class="fas fa-map-marker-alt" aria-hidden="true"></i> Riyadh &bull; 2 hours ago</p>
+                    </div>
+                </a>
+
+                <a href="#" onclick="showToast('Only the Cars flow is part of this prototype'); return false;" class="clickable block bg-white dark:bg-gray-800 rounded-xl overflow-hidden shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-lg">
+                    <div class="h-48 bg-gray-200 dark:bg-gray-700 relative"><img src="https://images.unsplash.com/photo-1611186871348-b1ce696e52c9?auto=format&fit=crop&w=600&q=80" data-fallback="photo" class="w-full h-full object-cover" alt="iPhone 14 Pro Max"></div>
+                    <div class="p-5">
+                        <h3 class="font-bold text-gray-900 dark:text-white truncate text-xl">iPhone 14 Pro Max</h3>
+                        <p class="text-haraj-blue dark:text-sky-400 font-bold mt-2 text-2xl">2,500 SR</p>
+                        <p class="text-gray-600 dark:text-gray-300 text-base mt-3"><i class="fas fa-map-marker-alt" aria-hidden="true"></i> Jeddah &bull; 5 hours ago</p>
+                    </div>
+                </a>
+
+                <a href="#" onclick="showToast('Only the Cars flow is part of this prototype'); return false;" class="clickable block bg-white dark:bg-gray-800 rounded-xl overflow-hidden shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-lg">
+                    <div class="h-48 bg-gray-200 dark:bg-gray-700 relative"><img src="https://images.unsplash.com/photo-1606813907291-d86efa9b94db?auto=format&fit=crop&w=600&q=80" data-fallback="photo" class="w-full h-full object-cover" alt="PlayStation 5 console"></div>
+                    <div class="p-5">
+                        <h3 class="font-bold text-gray-900 dark:text-white truncate text-xl">PS5 Console</h3>
+                        <p class="text-haraj-blue dark:text-sky-400 font-bold mt-2 text-2xl">1,800 SR</p>
+                        <p class="text-gray-600 dark:text-gray-300 text-base mt-3"><i class="fas fa-map-marker-alt" aria-hidden="true"></i> Dammam &bull; 1 day ago</p>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </main>
+
+    <!-- ========================================== -->
+    <!-- SCREEN 2: SEARCH & FILTER -->
+    <!-- ========================================== -->
+    <main id="screen-2" class="device-mockup flex-col" aria-label="Search results">
+        <header class="bg-white dark:bg-gray-900 shadow-sm p-4 flex justify-between items-center gap-4 sticky top-0 z-20 border-b dark:border-gray-800">
+            <a href="#" onclick="goHome(); return false;" class="clickable flex items-center gap-4 shrink-0" aria-label="Haraj home">
+                <img src="https://haraj.com.sa/assets/images/logo.svg" data-fallback="logo" alt="Haraj" class="haraj-logo-img dark:brightness-200">
+            </a>
+            <form class="flex-1 max-w-2xl" role="search" onsubmit="return doSearch('q2');">
+                <label for="q2" class="sr-only">Search Haraj</label>
+                <div class="relative">
+                    <input id="q2" type="search" autocomplete="off" placeholder="Search for cars, real estate, devices..." class="w-full ps-4 pe-12 py-3 border border-sky-300 dark:border-sky-600 rounded-lg bg-white dark:bg-gray-800 dark:text-white text-lg font-semibold text-gray-800">
+                    <button type="submit" aria-label="Search" class="absolute end-1 top-1 bottom-1 px-3 rounded-md text-haraj-blue dark:text-sky-400 hover:bg-gray-100 dark:hover:bg-gray-700"><i class="fas fa-search" aria-hidden="true"></i></button>
+                </div>
+            </form>
+            <div class="flex items-center gap-3 shrink-0">
+                <button type="button" onclick="showToast('City picker is not part of this prototype')" class="flex items-center gap-1 text-gray-700 dark:text-gray-200 text-base"><i class="fas fa-map-marker-alt text-red-600 dark:text-red-400" aria-hidden="true"></i> Riyadh</button>
+                <div data-a11y></div>
+                <button type="button" onclick="openPost()" class="clickable bg-haraj-blue text-white px-5 py-2.5 rounded-lg font-semibold shadow-md"><i class="fas fa-plus" aria-hidden="true"></i> Post Ad</button>
+            </div>
+        </header>
+
+        <div class="flex p-8 gap-8 items-start">
+            <!-- FILTER SIDEBAR: filters apply instantly (no APPLY step = fewer clicks) -->
+            <aside aria-label="Filters" class="w-80 shrink-0 bg-white dark:bg-gray-900 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 sticky top-24 transition-colors">
+                <div class="flex items-center justify-between border-b dark:border-gray-700 pb-3 mb-5">
+                    <h2 class="font-bold text-xl text-gray-800 dark:text-white"><i class="fas fa-sliders-h me-2" aria-hidden="true"></i>Filters</h2>
+                    <button type="button" onclick="clearAll()" class="text-haraj-blue dark:text-sky-400 font-semibold underline text-base">Clear all</button>
+                </div>
+                <div class="space-y-4">
+                    <div>
+                        <label for="f-city" class="block text-base font-bold text-gray-800 dark:text-gray-200 mb-1">City</label>
+                        <select id="f-city" onchange="render()" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg p-2.5 text-base bg-gray-50 dark:bg-gray-800 dark:text-white"></select>
+                    </div>
+                    <div class="flex gap-3">
+                        <div class="w-1/2">
+                            <label for="f-make" class="block text-base font-bold text-gray-800 dark:text-gray-200 mb-1">Make</label>
+                            <select id="f-make" onchange="onMakeChange()" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg p-2.5 text-base bg-gray-50 dark:bg-gray-800 dark:text-white"></select>
+                        </div>
+                        <div class="w-1/2">
+                            <label for="f-model" class="block text-base font-bold text-gray-800 dark:text-gray-200 mb-1">Model</label>
+                            <select id="f-model" onchange="render()" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg p-2.5 text-base bg-gray-50 dark:bg-gray-800 dark:text-white"></select>
+                        </div>
+                    </div>
+                    <div class="flex gap-3">
+                        <div class="w-1/2">
+                            <label for="f-yfrom" class="block text-base font-bold text-gray-800 dark:text-gray-200 mb-1">Year from</label>
+                            <select id="f-yfrom" onchange="render()" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg p-2.5 text-base bg-gray-50 dark:bg-gray-800 dark:text-white"></select>
+                        </div>
+                        <div class="w-1/2">
+                            <label for="f-yto" class="block text-base font-bold text-gray-800 dark:text-gray-200 mb-1">Year to</label>
+                            <select id="f-yto" onchange="render()" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg p-2.5 text-base bg-gray-50 dark:bg-gray-800 dark:text-white"></select>
+                        </div>
+                    </div>
+                    <fieldset>
+                        <legend class="block text-base font-bold text-gray-800 dark:text-gray-200 mb-1">Price range (SR)</legend>
+                        <div class="flex items-center gap-2">
+                            <label for="f-pmin" class="sr-only">Minimum price</label>
+                            <input id="f-pmin" type="text" inputmode="numeric" placeholder="Min" onchange="onNumInput(this); render()" class="w-1/2 border border-gray-300 dark:border-gray-600 rounded-lg p-2.5 text-base bg-gray-50 dark:bg-gray-800 dark:text-white">
+                            <span class="text-gray-600 dark:text-gray-300" aria-hidden="true">&ndash;</span>
+                            <label for="f-pmax" class="sr-only">Maximum price</label>
+                            <input id="f-pmax" type="text" inputmode="numeric" placeholder="Max" onchange="onNumInput(this); render()" class="w-1/2 border border-gray-300 dark:border-gray-600 rounded-lg p-2.5 text-base bg-gray-50 dark:bg-gray-800 dark:text-white">
+                        </div>
+                    </fieldset>
+                    <details class="border-t dark:border-gray-700 pt-3">
+                        <summary class="cursor-pointer font-bold text-gray-800 dark:text-gray-200 text-base">More filters</summary>
+                        <div class="space-y-4 mt-4">
+                            <fieldset>
+                                <legend class="block text-base font-bold text-gray-800 dark:text-gray-200 mb-1">Condition</legend>
+                                <div class="flex gap-5 text-base">
+                                    <label class="flex items-center gap-2 dark:text-gray-100"><input id="f-used" type="checkbox" class="w-5 h-5" checked onchange="render()"> Used</label>
+                                    <label class="flex items-center gap-2 dark:text-gray-100"><input id="f-new" type="checkbox" class="w-5 h-5" checked onchange="render()"> New</label>
+                                </div>
+                            </fieldset>
+                            <div>
+                                <label for="f-km" class="block text-base font-bold text-gray-800 dark:text-gray-200 mb-1">Odometer (max KM)</label>
+                                <input id="f-km" type="range" min="0" max="300000" step="10000" value="300000" oninput="render()" class="w-full">
+                                <output id="f-km-out" for="f-km" class="block text-end text-sm text-gray-700 dark:text-gray-300 mt-1">Any</output>
+                            </div>
+                        </div>
+                    </details>
+                </div>
+            </aside>
+
+            <section class="flex-1 min-w-0" aria-label="Results">
+                <h1 class="sr-only" tabindex="-1">Search results</h1>
+                <div class="flex justify-between items-center mb-4 gap-4">
+                    <h2 class="font-bold text-2xl text-gray-800 dark:text-white">Results <span id="result-count" role="status" aria-live="polite" class="text-lg font-normal text-gray-700 dark:text-gray-300">(0 found)</span></h2>
+                    <div class="flex items-center gap-2">
+                        <label for="sort" class="text-base text-gray-700 dark:text-gray-300">Sort by</label>
+                        <select id="sort" onchange="render()" class="border border-gray-300 dark:border-gray-600 rounded-lg p-2 text-base bg-white dark:bg-gray-800 dark:text-white">
+                            <option value="new">Newest</option>
+                            <option value="plow">Price: low to high</option>
+                            <option value="phigh">Price: high to low</option>
+                            <option value="km">Lowest odometer</option>
+                        </select>
+                    </div>
+                </div>
+                <div id="chips" class="flex flex-wrap gap-2 mb-4" aria-label="Active filters"></div>
+                <div id="results" class="flex flex-col gap-5"></div>
+            </section>
+        </div>
+    </main>
+
+    <!-- ========================================== -->
+    <!-- SCREEN 3: ITEM DETAIL -->
+    <!-- ========================================== -->
+    <main id="screen-3" class="device-mockup flex-col" aria-label="Ad details">
+        <header class="bg-white dark:bg-gray-900 shadow-sm p-4 flex items-center justify-between gap-4 border-b dark:border-gray-800 sticky top-0 z-20 transition-colors">
+            <div class="flex items-center min-w-0">
+                <button type="button" onclick="goBack()" class="clickable text-haraj-blue dark:text-sky-400 font-bold hover:underline text-lg shrink-0"><i class="fas fa-chevron-left me-1 rtl:rotate-180" aria-hidden="true"></i> Back</button>
+                <nav aria-label="Breadcrumb" class="ms-6 text-gray-700 dark:text-gray-300 font-semibold text-base truncate">
+                    <a href="#" onclick="goHome(); return false;" class="hover:underline">Home</a> <span aria-hidden="true">&gt;</span>
+                    <a href="#" onclick="showResults({reset:true}); return false;" class="hover:underline">Cars</a> <span aria-hidden="true">&gt;</span>
+                    <a id="crumb-make" href="#" class="hover:underline"></a> <span aria-hidden="true">&gt;</span>
+                    <a id="crumb-model" href="#" class="hover:underline" aria-current="page"></a>
+                </nav>
+            </div>
+            <div data-a11y></div>
+        </header>
+
+        <div class="p-8 max-w-6xl mx-auto flex gap-10 items-start w-full">
+            <div class="w-1/2">
+                <div class="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-2 mb-4">
+                    <div id="d-main" class="w-full h-[360px] rounded-lg overflow-hidden"></div>
+                </div>
+                <div id="d-thumbs" class="flex gap-3"></div>
+            </div>
+
+            <!-- Right column is sticky: contact buttons stay in view while the ad is scrolled -->
+            <div class="w-1/2 sticky top-24 self-start">
+                <div class="bg-white dark:bg-gray-900 p-8 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 transition-colors">
+                    <h1 id="d-title" tabindex="-1" class="text-4xl font-bold text-gray-900 dark:text-white mb-3"></h1>
+                    <p id="d-price" class="text-4xl text-haraj-blue dark:text-sky-400 font-bold mb-6 pb-6 border-b dark:border-gray-700"></p>
+
+                    <div class="space-y-3 mb-6 text-gray-800 dark:text-gray-200 text-lg">
+                        <p><i class="fas fa-tachometer-alt w-6 text-gray-600 dark:text-gray-400" aria-hidden="true"></i> <strong class="dark:text-white">Odometer:</strong> <span id="d-odo"></span></p>
+                        <p><i class="fas fa-map-marker-alt w-6 text-red-600 dark:text-red-400" aria-hidden="true"></i> <strong class="dark:text-white">Location:</strong> <span id="d-loc"></span></p>
+                        <p><i class="fas fa-info-circle w-6 text-sky-700 dark:text-sky-400" aria-hidden="true"></i> <strong class="dark:text-white">Condition:</strong> <span id="d-cond"></span></p>
+                    </div>
+
+                    <!-- Seller trust card (from Task 5 sketch: seller ratings) -->
+                    <div class="flex items-center gap-4 p-4 mb-6 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+                        <div class="w-14 h-14 rounded-full bg-haraj-blue text-white flex items-center justify-center text-xl font-bold shrink-0" aria-hidden="true" id="d-seller-initial"></div>
+                        <div class="min-w-0">
+                            <p class="font-bold text-lg text-gray-900 dark:text-white"><span id="d-seller-name"></span> <span class="ms-1 text-sm font-semibold text-green-800 dark:text-green-300"><i class="fas fa-check-circle" aria-hidden="true"></i> Verified phone</span></p>
+                            <p class="text-gray-800 dark:text-gray-200 text-base"><i class="fas fa-star text-amber-600 dark:text-amber-400" aria-hidden="true"></i> <strong id="d-seller-rating"></strong> <span id="d-seller-reviews" class="text-gray-700 dark:text-gray-300"></span></p>
+                            <p id="d-seller-since" class="text-gray-700 dark:text-gray-300 text-sm"></p>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col gap-3">
+                        <button type="button" class="clickable bg-gray-100 dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white font-bold py-3.5 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700 transition text-xl" onclick="showToast('Chat opened (prototype)')"><i class="fas fa-comment-dots text-haraj-blue dark:text-sky-400 me-2" aria-hidden="true"></i> Chat</button>
+                        <button type="button" class="clickable bg-haraj-green text-white font-bold py-3.5 rounded-xl hover:bg-green-800 shadow-md transition text-xl" onclick="showToast('Redirecting to WhatsApp (prototype)')"><i class="fab fa-whatsapp me-2" aria-hidden="true"></i> WhatsApp</button>
+                        <button type="button" class="clickable bg-haraj-blue text-white font-bold py-3.5 rounded-xl hover:bg-sky-800 shadow-md transition text-xl" onclick="showToast('Calling seller (prototype)')"><i class="fas fa-phone-alt me-2" aria-hidden="true"></i> Call</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- ========================================== -->
+    <!-- SCREEN 4: POST AD (4-step wizard) -->
+    <!-- ========================================== -->
+    <main id="screen-4" class="device-mockup flex-col" aria-label="Post ad">
+        <header class="bg-white dark:bg-gray-900 shadow-sm p-4 px-8 flex justify-between items-center gap-4 border-b dark:border-gray-800 sticky top-0 z-20 transition-colors">
+            <h1 tabindex="-1" class="text-2xl font-bold text-gray-800 dark:text-white">Post Ad</h1>
+            <div class="flex items-center gap-3">
+                <div data-a11y></div>
+                <button type="button" onclick="goBack('screen-1')" class="clickable text-gray-700 dark:text-gray-300 font-bold hover:text-gray-900 dark:hover:text-white px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition text-lg">Cancel</button>
+            </div>
+        </header>
+
+        <div class="p-8 max-w-4xl mx-auto w-full flex-1">
+            <ol id="stepper" class="flex justify-between items-start mb-10" aria-label="Progress"></ol>
+
+            <!-- STEP 1: PHOTOS -->
+            <section id="wiz-1" aria-labelledby="w1-h">
+                <h2 id="w1-h" tabindex="-1" class="text-2xl font-bold mb-1 text-gray-900 dark:text-white">Add photos</h2>
+                <p class="text-gray-700 dark:text-gray-300 mb-5 text-base">Up to 10 photos. You can add more later.</p>
+                <div class="relative border-4 border-dashed border-sky-400 dark:border-sky-600 rounded-2xl bg-sky-50 dark:bg-sky-900/20 p-14 text-center mb-6 hover:bg-sky-100 dark:hover:bg-sky-900/40 transition focus-within:ring-4 focus-within:ring-amber-500">
+                    <input id="photo-input" type="file" accept="image/*" multiple class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" aria-label="Upload photos" onchange="onPhotos(this)">
+                    <i class="fas fa-camera text-6xl text-haraj-blue dark:text-sky-400 mb-5" aria-hidden="true"></i>
+                    <p class="text-gray-900 dark:text-white font-bold text-2xl mb-1">Upload Photos</p>
+                    <p class="text-gray-700 dark:text-gray-300 text-base">Drag and drop or click to browse</p>
+                </div>
+                <ul id="photo-list" class="grid grid-cols-5 gap-3"></ul>
+            </section>
+
+            <!-- STEP 2: DETAILS -->
+            <section id="wiz-2" class="hidden" aria-labelledby="w2-h">
+                <h2 id="w2-h" tabindex="-1" class="text-2xl font-bold mb-1 text-gray-900 dark:text-white">Item details</h2>
+                <p class="text-gray-700 dark:text-gray-300 mb-5 text-base">Fields marked <span aria-hidden="true">*</span><span class="sr-only">with an asterisk</span> are required. Choosing a category changes the fields, so buyers can filter on them.</p>
+                <div class="bg-white dark:bg-gray-900 p-8 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 space-y-5">
+                    <div class="w-1/2">
+                        <label for="a-cat" class="block text-base font-bold text-gray-800 dark:text-gray-200 mb-1">Category *</label>
+                        <select id="a-cat" onchange="onCatChange()" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg p-3 text-base bg-gray-50 dark:bg-gray-800 dark:text-white">
+                            <option value="cars">Cars</option>
+                            <option value="devices">Devices</option>
+                        </select>
+                    </div>
+
+                    <div id="fields-cars" class="grid grid-cols-2 gap-5">
+                        <div>
+                            <label for="a-make" class="block text-base font-bold text-gray-800 dark:text-gray-200 mb-1">Make *</label>
+                            <select id="a-make" onchange="onPostMakeChange()" aria-describedby="err-a-make" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg p-3 text-base bg-gray-50 dark:bg-gray-800 dark:text-white"></select>
+                            <p id="err-a-make" role="alert" class="hidden mt-1 text-sm font-semibold text-red-700 dark:text-red-300">Choose a make.</p>
+                        </div>
+                        <div>
+                            <label for="a-model" class="block text-base font-bold text-gray-800 dark:text-gray-200 mb-1">Model *</label>
+                            <select id="a-model" aria-describedby="err-a-model" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg p-3 text-base bg-gray-50 dark:bg-gray-800 dark:text-white"></select>
+                            <p id="err-a-model" role="alert" class="hidden mt-1 text-sm font-semibold text-red-700 dark:text-red-300">Choose a model.</p>
+                        </div>
+                        <div>
+                            <label for="a-year" class="block text-base font-bold text-gray-800 dark:text-gray-200 mb-1">Year *</label>
+                            <select id="a-year" aria-describedby="err-a-year" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg p-3 text-base bg-gray-50 dark:bg-gray-800 dark:text-white"></select>
+                            <p id="err-a-year" role="alert" class="hidden mt-1 text-sm font-semibold text-red-700 dark:text-red-300">Choose a year.</p>
+                        </div>
+                        <div>
+                            <label for="a-km" class="block text-base font-bold text-gray-800 dark:text-gray-200 mb-1">Odometer *</label>
+                            <div class="relative">
+                                <input id="a-km" type="text" inputmode="numeric" autocomplete="off" aria-describedby="err-a-km" onchange="onNumInput(this)" oninput="onNumInput(this)" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg p-3 pe-14 text-base bg-gray-50 dark:bg-gray-800 dark:text-white">
+                                <span class="absolute end-4 top-3 text-gray-700 dark:text-gray-300 font-semibold" aria-hidden="true">KM</span>
+                            </div>
+                            <p id="err-a-km" role="alert" class="hidden mt-1 text-sm font-semibold text-red-700 dark:text-red-300">Enter the odometer reading in kilometres.</p>
+                        </div>
+                        <fieldset class="col-span-1">
+                            <legend class="block text-base font-bold text-gray-800 dark:text-gray-200 mb-2">Condition *</legend>
+                            <div class="flex gap-6 text-base dark:text-gray-100">
+                                <label class="flex items-center gap-2"><input type="radio" name="a-cond" value="Used" checked class="w-5 h-5"> Used</label>
+                                <label class="flex items-center gap-2"><input type="radio" name="a-cond" value="New" class="w-5 h-5"> New</label>
+                            </div>
+                        </fieldset>
+                    </div>
+
+                    <div id="fields-devices" class="hidden grid grid-cols-2 gap-5">
+                        <div>
+                            <label for="a-dbrand" class="block text-base font-bold text-gray-800 dark:text-gray-200 mb-1">Brand *</label>
+                            <select id="a-dbrand" onchange="onDeviceBrandChange()" aria-describedby="err-a-dbrand" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg p-3 text-base bg-gray-50 dark:bg-gray-800 dark:text-white"></select>
+                            <p id="err-a-dbrand" role="alert" class="hidden mt-1 text-sm font-semibold text-red-700 dark:text-red-300">Choose a brand.</p>
+                        </div>
+                        <div>
+                            <label for="a-dmodel" class="block text-base font-bold text-gray-800 dark:text-gray-200 mb-1">Model *</label>
+                            <select id="a-dmodel" aria-describedby="err-a-dmodel" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg p-3 text-base bg-gray-50 dark:bg-gray-800 dark:text-white"></select>
+                            <p id="err-a-dmodel" role="alert" class="hidden mt-1 text-sm font-semibold text-red-700 dark:text-red-300">Choose a model.</p>
+                        </div>
+                        <div>
+                            <label for="a-dstorage" class="block text-base font-bold text-gray-800 dark:text-gray-200 mb-1">Storage *</label>
+                            <select id="a-dstorage" aria-describedby="err-a-dstorage" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg p-3 text-base bg-gray-50 dark:bg-gray-800 dark:text-white"></select>
+                            <p id="err-a-dstorage" role="alert" class="hidden mt-1 text-sm font-semibold text-red-700 dark:text-red-300">Choose the storage size.</p>
+                        </div>
+                        <fieldset>
+                            <legend class="block text-base font-bold text-gray-800 dark:text-gray-200 mb-2">Condition *</legend>
+                            <div class="flex gap-6 text-base dark:text-gray-100">
+                                <label class="flex items-center gap-2"><input type="radio" name="d-cond" value="Used" checked class="w-5 h-5"> Used</label>
+                                <label class="flex items-center gap-2"><input type="radio" name="d-cond" value="New" class="w-5 h-5"> New</label>
+                            </div>
+                        </fieldset>
+                    </div>
+
+                    <div class="w-1/2">
+                        <label for="a-city" class="block text-base font-bold text-gray-800 dark:text-gray-200 mb-1">City *</label>
+                        <select id="a-city" aria-describedby="err-a-city" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg p-3 text-base bg-gray-50 dark:bg-gray-800 dark:text-white"></select>
+                        <p id="err-a-city" role="alert" class="hidden mt-1 text-sm font-semibold text-red-700 dark:text-red-300">Choose a city.</p>
+                    </div>
+
+                    <div>
+                        <label for="a-desc" class="block text-base font-bold text-gray-800 dark:text-gray-200 mb-1">Description <span class="font-normal text-gray-700 dark:text-gray-300">(optional)</span></label>
+                        <textarea id="a-desc" rows="4" maxlength="500" oninput="document.getElementById('desc-count').textContent = this.value.length + ' / 500'" aria-describedby="desc-help desc-count" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg p-3 text-base bg-gray-50 dark:bg-gray-800 dark:text-white"></textarea>
+                        <div class="flex justify-between text-sm text-gray-700 dark:text-gray-300 mt-1">
+                            <span id="desc-help">Condition, service history, extras. The make, model and price are already captured above.</span>
+                            <span id="desc-count">0 / 500</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- STEP 3: PRICE -->
+            <section id="wiz-3" class="hidden" aria-labelledby="w3-h">
+                <h2 id="w3-h" tabindex="-1" class="text-2xl font-bold mb-1 text-gray-900 dark:text-white">Set your price</h2>
+                <p class="text-gray-700 dark:text-gray-300 mb-5 text-base">A price is required, so buyers can compare ads.</p>
+                <div class="bg-white dark:bg-gray-900 p-8 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 space-y-5">
+                    <div class="w-2/3">
+                        <label for="a-price" class="block text-base font-bold text-gray-800 dark:text-gray-200 mb-1">Price *</label>
+                        <div class="relative">
+                            <input id="a-price" type="text" inputmode="numeric" autocomplete="off" oninput="onNumInput(this); checkPrice()" aria-describedby="price-preview price-warn err-a-price" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg p-4 pe-16 text-2xl font-bold bg-gray-50 dark:bg-gray-800 dark:text-white">
+                            <span class="absolute end-4 top-5 text-gray-700 dark:text-gray-300 font-bold" aria-hidden="true">SR</span>
+                        </div>
+                        <p id="price-preview" class="mt-2 text-lg font-semibold text-gray-800 dark:text-gray-100" aria-live="polite"></p>
+                        <p id="err-a-price" role="alert" class="hidden mt-1 text-sm font-semibold text-red-700 dark:text-red-300">Enter a price in Saudi riyals.</p>
+                        <div id="price-warn" role="status" aria-live="polite" class="hidden mt-3 p-3 rounded-lg bg-amber-50 dark:bg-amber-900/30 border border-amber-400 text-amber-900 dark:text-amber-100 text-base"></div>
+                    </div>
+                    <label class="flex items-center gap-3 text-lg dark:text-gray-100"><input id="a-nego" type="checkbox" class="w-5 h-5"> Price is negotiable</label>
+                </div>
+            </section>
+
+            <!-- STEP 4: REVIEW -->
+            <section id="wiz-4" class="hidden" aria-labelledby="w4-h">
+                <h2 id="w4-h" tabindex="-1" class="text-2xl font-bold mb-1 text-gray-900 dark:text-white">Review and publish</h2>
+                <p class="text-gray-700 dark:text-gray-300 mb-5 text-base">The title is generated from your details so every ad is easy to scan.</p>
+                <div id="review" class="bg-white dark:bg-gray-900 p-8 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700"></div>
+            </section>
+
+            <section id="wiz-done" class="hidden text-center py-16" aria-labelledby="wd-h">
+                <i class="fas fa-check-circle text-7xl text-haraj-green dark:text-green-400 mb-5" aria-hidden="true"></i>
+                <h2 id="wd-h" tabindex="-1" class="text-3xl font-bold text-gray-900 dark:text-white mb-2">Your ad is live (prototype)</h2>
+                <p class="text-gray-700 dark:text-gray-300 text-lg mb-8">In the real app it would appear in search results straight away.</p>
+                <button type="button" onclick="goHome()" class="clickable bg-haraj-blue text-white font-bold py-3 px-10 rounded-xl hover:bg-sky-800 shadow-md text-xl">Back to home</button>
+            </section>
+
+            <div id="wiz-nav" class="flex justify-between items-center pt-8">
+                <button id="wiz-back" type="button" onclick="wizBack()" class="clickable text-gray-800 dark:text-gray-100 font-bold py-3 px-8 rounded-xl border-2 border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800 text-lg"><i class="fas fa-arrow-left me-2 rtl:rotate-180" aria-hidden="true"></i> Back</button>
+                <button id="wiz-next" type="button" onclick="wizNext()" class="clickable bg-gray-800 dark:bg-gray-100 dark:text-gray-900 text-white font-bold py-3.5 px-12 rounded-xl hover:bg-gray-700 dark:hover:bg-white shadow-md transition flex items-center text-xl">
+                    <span id="wiz-next-label">Next</span> <i class="fas fa-arrow-right ms-3 rtl:rotate-180" aria-hidden="true"></i>
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <div id="toast" role="status" aria-live="polite" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 hidden px-5 py-3 rounded-lg bg-gray-900 text-white dark:bg-gray-100 dark:text-gray-900 shadow-lg text-base font-semibold"></div>
+
+    <script>
+        /* ---------- Sample data (prototype only) ---------- */
+        const CITIES = ['Riyadh', 'Jeddah', 'Dammam'];
+        const MODELS = { Toyota: ['Avalon', 'Camry'], Mazda: ['CX9', 'Mazda6'], Ford: ['Explorer', 'Taurus'] };
+        const DEVICES = { Apple: ['iPhone 17', 'iPhone 17 Pro Max'], Samsung: ['Galaxy S25'] };
+        const STORAGE = ['128 GB', '256 GB', '512 GB', '1 TB'];
+        /* Typical price ranges (SR), sample values used for the "did you mean?" warning */
+        const RANGES = { 'Avalon': [90000, 160000], 'Camry': [50000, 110000], 'CX9': [50000, 110000], 'Mazda6': [40000, 90000], 'Explorer': [70000, 150000], 'Taurus': [30000, 80000],
+                         'iPhone 17': [2500, 5000], 'iPhone 17 Pro Max': [4500, 8000], 'Galaxy S25': [2500, 4500] };
+        const AVALON_IMGS = [
+            'https://www.almuraba.net/wp-content/uploads/2022/01/%D8%AA%D9%88%D9%8A%D9%88%D8%AA%D8%A7-%D8%A7%D9%81%D8%A7%D9%84%D9%88%D9%86-2022-3-1.jpg?v=20261016',
+            'https://images.unsplash.com/photo-1629897048514-3dd742630266?auto=format&fit=crop&w=800&q=80',
+            'https://images.unsplash.com/photo-1621007947382-bb3c3994e3fd?auto=format&fit=crop&w=800&q=80'
+        ];
+        const SELLERS = [
+            { name: 'Abdullah M.', rating: '4.8', reviews: 23, since: 2021 },
+            { name: 'Khalid A.', rating: '4.5', reviews: 11, since: 2022 },
+            { name: 'Nasser S.', rating: '4.9', reviews: 41, since: 2019 }
+        ];
+        const CARS = [
+            { id: 1, make: 'Toyota', model: 'Avalon', year: 2023, price: 120000, city: 'Riyadh', area: 'Al Malqa', km: 85000, cond: 'Used', hrs: 2, notes: '1st owner, no accidents, full dealership history. Valid Fahas and Istemara.', imgs: AVALON_IMGS, seller: 0 },
+            { id: 2, make: 'Mazda', model: 'CX9', year: 2019, price: 68500, city: 'Dammam', area: 'Al Faisaliyah', km: 92000, cond: 'Used', hrs: 6, notes: 'Single owner, regular service, valid Fahas and Istemara.', imgs: [], seller: 1 },
+            { id: 3, make: 'Mazda', model: 'CX9', year: 2019, price: 74000, city: 'Dammam', area: 'Al Shatea', km: 78000, cond: 'Used', hrs: 20, notes: 'Clean interior, no accidents.', imgs: [], seller: 2 },
+            { id: 4, make: 'Mazda', model: 'CX9', year: 2020, price: 69000, city: 'Dammam', area: 'Al Badiyah', km: 120000, cond: 'Used', hrs: 30, notes: 'Highway use, full service history.', imgs: [], seller: 1 },
+            { id: 5, make: 'Mazda', model: 'CX9', year: 2019, price: 66000, city: 'Riyadh', area: 'Al Nakheel', km: 90000, cond: 'Used', hrs: 52, notes: 'Second owner, minor paint work on bumper.', imgs: [], seller: 0 },
+            { id: 6, make: 'Toyota', model: 'Camry', year: 2021, price: 72000, city: 'Jeddah', area: 'Al Rawdah', km: 64000, cond: 'Used', hrs: 9, notes: 'Agency maintained, one owner.', imgs: [], seller: 2 },
+            { id: 7, make: 'Toyota', model: 'Avalon', year: 2021, price: 98000, city: 'Jeddah', area: 'Al Safa', km: 70000, cond: 'Used', hrs: 14, notes: 'Limited edition, no accidents.', imgs: [], seller: 1 },
+            { id: 8, make: 'Ford', model: 'Explorer', year: 2020, price: 89000, city: 'Dammam', area: 'Al Faisaliyah', km: 83000, cond: 'Used', hrs: 70, notes: 'Family SUV, 7 seats, good condition.', imgs: [], seller: 0 }
+        ];
+
+        /* ---------- Helpers ---------- */
+        const $ = id => document.getElementById(id);
+        const fmt = n => Number(n).toLocaleString('en-US');
+        const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+        const digits = s => String(s || '').replace(/\D/g, '');
+        function opts(list, first) { return (first ? `<option value="">${first}</option>` : '') + list.map(v => `<option value="${esc(v)}">${esc(v)}</option>`).join(''); }
+
+        let toastTimer;
+        function showToast(msg) {
+            const t = $('toast'); t.textContent = msg; t.classList.remove('hidden');
+            clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.add('hidden'), 2600);
+        }
+        function protoOnly(name) { showToast(name + ' is not part of this prototype. Try Cars.'); }
+
+        function placeholder(label) {
+            const d = document.createElement('div');
+            d.className = 'w-full h-full min-h-[6rem] flex flex-col items-center justify-center gap-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200';
+            d.setAttribute('role', 'img'); d.setAttribute('aria-label', label || 'Photo placeholder');
+            d.innerHTML = '<i class="fas fa-image text-3xl" aria-hidden="true"></i><span class="text-sm font-semibold">Photo</span>';
+            return d;
+        }
+        /* If a remote image can't load, show a neutral placeholder (or the text wordmark for the logo) */
+        document.addEventListener('error', e => {
+            const img = e.target;
+            if (!(img instanceof HTMLImageElement) || !img.dataset.fallback) return;
+            if (img.dataset.fallback === 'logo') {
+                const w = document.createElement('span');
+                w.className = 'text-3xl font-bold text-haraj-blue dark:text-sky-400 leading-none';
+                w.textContent = 'حراج Haraj'; img.replaceWith(w);
+            } else { img.replaceWith(placeholder(img.alt)); }
+        }, true);
+        function imgHTML(src, alt) { return src ? `<img src="${src}" data-fallback="photo" alt="${esc(alt)}" class="w-full h-full object-cover">` : ''; }
+        function mountImg(container, src, alt) {
+            container.innerHTML = src ? imgHTML(src, alt) : '';
+            if (!src) container.appendChild(placeholder('Photo placeholder: seller has not added photos yet'));
+        }
+
+        /* ---------- Navigation ---------- */
+        let current = 'screen-1'; const stack = [];
+        function show(id) {
+            document.querySelectorAll('.device-mockup').forEach(el => el.classList.remove('active-screen'));
+            const s = $(id); s.classList.add('active-screen'); s.scrollTop = 0; current = id;
+            const h = s.querySelector('h1[tabindex="-1"]'); if (h) h.focus({ preventScroll: true });
+        }
+        function navTo(id, isBack) { if (!isBack && id !== current) stack.push(current); show(id); }
+        function goBack(fallback) { navTo(stack.pop() || fallback || 'screen-2', true); }
+        function goHome() { stack.length = 0; show('screen-1'); }
+
+        /* ---------- Accessibility controls (injected into every header) ---------- */
+        let currentSize = 100;
+        function changeFontSize(delta) {
+            currentSize = Math.max(80, Math.min(140, currentSize + delta));
+            document.documentElement.style.fontSize = currentSize + '%';
+            showToast('Text size ' + currentSize + '%');
+        }
+        function toggleTheme() {
+            const dark = document.documentElement.classList.toggle('dark');
+            document.documentElement.classList.toggle('light', !dark);
+            document.querySelectorAll('[data-theme-btn]').forEach(b => b.setAttribute('aria-pressed', String(dark)));
+        }
+        const btnCls = 'px-3 py-1.5 rounded bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 font-bold text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-600';
+        document.querySelectorAll('[data-a11y]').forEach(el => {
+            el.innerHTML = `<div class="flex items-center gap-1" role="group" aria-label="Display settings">
+                <button type="button" onclick="changeFontSize(-10)" aria-label="Decrease text size" class="${btnCls}">A&minus;</button>
+                <button type="button" onclick="changeFontSize(10)" aria-label="Increase text size" class="${btnCls}">A+</button>
+                <button type="button" data-theme-btn aria-pressed="false" onclick="toggleTheme()" class="${btnCls}"><span class="sr-only">Dark mode</span><span class="dark:hidden" aria-hidden="true"><i class="fas fa-moon"></i></span><span class="hidden dark:inline" aria-hidden="true"><i class="fas fa-sun"></i></span></button>
+            </div>`;
+        });
+        function scrollCategories(direction) { $('categories-scroll').scrollBy({ left: direction * 300, behavior: 'smooth' }); }
+
+        /* ---------- Search & filters ---------- */
+        let Q = '';
+        function initFilters() {
+            $('f-city').innerHTML = opts(CITIES, 'All cities');
+            $('f-make').innerHTML = opts(Object.keys(MODELS), 'Any make');
+            $('f-model').innerHTML = opts([], 'Any model');
+            const years = []; for (let y = 2024; y >= 2012; y--) years.push(y);
+            $('f-yfrom').innerHTML = opts(years, 'Any'); $('f-yto').innerHTML = opts(years, 'Any');
+            const pm = Object.keys(MODELS);
+        }
+        function onMakeChange() { $('f-model').innerHTML = opts(MODELS[$('f-make').value] || [], 'Any model'); render(); }
+        function onNumInput(el) { const d = digits(el.value); el.value = d ? fmt(d) : ''; }
+        function doSearch(inputId) { Q = $(inputId).value.trim(); $('q1').value = Q; $('q2').value = Q; showResults({}); return false; }
+        function showResults(opt) {
+            if (opt.reset) { Q = ''; $('q1').value = ''; $('q2').value = ''; resetFilterControls(); }
+            if (opt.make) { $('f-make').value = opt.make; onMakeChange(); }
+            if (opt.model) { $('f-model').value = opt.model; }
+            navTo('screen-2'); render();
+        }
+        function resetFilterControls() {
+            ['f-city', 'f-make', 'f-yfrom', 'f-yto'].forEach(id => $(id).value = '');
+            $('f-model').innerHTML = opts([], 'Any model'); $('f-pmin').value = ''; $('f-pmax').value = '';
+            $('f-used').checked = true; $('f-new').checked = true; $('f-km').value = 300000;
+        }
+        function clearAll() { Q = ''; $('q1').value = ''; $('q2').value = ''; resetFilterControls(); render(); }
+        function readF() {
+            return { city: $('f-city').value, make: $('f-make').value, model: $('f-model').value,
+                yFrom: +$('f-yfrom').value || 0, yTo: +$('f-yto').value || 0,
+                pMin: +digits($('f-pmin').value) || 0, pMax: +digits($('f-pmax').value) || 0,
+                used: $('f-used').checked, nw: $('f-new').checked, km: +$('f-km').value };
+        }
+        function matches(c, F) {
+            if (Q) { const hay = (c.make + ' ' + c.model + ' ' + c.year + ' ' + c.city).toLowerCase().replace(/\s+/g, ' ');
+                     const hayNoSpace = hay.replace(/ /g, '');
+                     if (!Q.toLowerCase().split(/\s+/).every(t => hay.includes(t) || hayNoSpace.includes(t))) return false; }
+            if (F.city && c.city !== F.city) return false;
+            if (F.make && c.make !== F.make) return false;
+            if (F.model && c.model !== F.model) return false;
+            if (F.yFrom && c.year < F.yFrom) return false;
+            if (F.yTo && c.year > F.yTo) return false;
+            if (F.pMin && c.price < F.pMin) return false;
+            if (F.pMax && c.price > F.pMax) return false;
+            if (c.cond === 'Used' && !F.used) return false;
+            if (c.cond === 'New' && !F.nw) return false;
+            if (F.km < 300000 && c.km > F.km) return false;
+            return true;
+        }
+        function ago(h) { if (h < 24) return h + (h === 1 ? ' hour ago' : ' hours ago'); const d = Math.round(h / 24); return d + (d === 1 ? ' day ago' : ' days ago'); }
+        function chipList(F) {
+            const c = [];
+            if (Q) c.push({ key: 'q', label: 'Search: ' + Q });
+            if (F.city) c.push({ key: 'city', label: F.city });
+            if (F.make) c.push({ key: 'make', label: F.make });
+            if (F.model) c.push({ key: 'model', label: F.model });
+            if (F.yFrom || F.yTo) c.push({ key: 'year', label: F.yFrom && F.yFrom === F.yTo ? 'Year ' + F.yFrom : 'Year ' + (F.yFrom || 'any') + ' to ' + (F.yTo || 'any') });
+            if (F.pMin || F.pMax) c.push({ key: 'price', label: 'Price ' + (F.pMin ? fmt(F.pMin) : '0') + ' to ' + (F.pMax ? fmt(F.pMax) : 'any') + ' SR' });
+            if (!F.used || !F.nw) c.push({ key: 'cond', label: F.used ? 'Used only' : (F.nw ? 'New only' : 'No condition selected') });
+            if (F.km < 300000) c.push({ key: 'km', label: 'Up to ' + fmt(F.km) + ' KM' });
+            return c;
+        }
+        function removeChip(key) {
+            if (key === 'q') { Q = ''; $('q1').value = ''; $('q2').value = ''; }
+            if (key === 'city') $('f-city').value = '';
+            if (key === 'make') { $('f-make').value = ''; $('f-model').innerHTML = opts([], 'Any model'); }
+            if (key === 'model') $('f-model').value = '';
+            if (key === 'year') { $('f-yfrom').value = ''; $('f-yto').value = ''; }
+            if (key === 'price') { $('f-pmin').value = ''; $('f-pmax').value = ''; }
+            if (key === 'cond') { $('f-used').checked = true; $('f-new').checked = true; }
+            if (key === 'km') $('f-km').value = 300000;
+            render();
+        }
+        function render() {
+            const F = readF();
+            $('q2').value = Q;
+            $('f-km-out').textContent = F.km >= 300000 ? 'Any' : 'Up to ' + fmt(F.km) + ' KM';
+            let list = CARS.filter(c => matches(c, F));
+            const s = $('sort').value;
+            list.sort((a, b) => s === 'plow' ? a.price - b.price : s === 'phigh' ? b.price - a.price : s === 'km' ? a.km - b.km : a.hrs - b.hrs);
+            $('result-count').textContent = '(' + list.length + ' found)';
+            const chips = chipList(F);
+            $('chips').innerHTML = chips.map(ch => `<button type="button" onclick="removeChip('${ch.key}')" aria-label="Remove filter: ${esc(ch.label)}" class="inline-flex items-center px-3 py-1.5 rounded-full bg-sky-100 dark:bg-sky-900/50 text-sky-900 dark:text-sky-100 border border-sky-300 dark:border-sky-700 text-base font-semibold hover:bg-sky-200 dark:hover:bg-sky-800">${esc(ch.label)} <i class="fas fa-times ms-2" aria-hidden="true"></i></button>`).join('');
+            if (!list.length) {
+                $('results').innerHTML = `<div class="bg-white dark:bg-gray-900 p-8 rounded-xl border border-gray-200 dark:border-gray-700 text-center">
+                    <i class="fas fa-search text-4xl text-gray-600 dark:text-gray-300 mb-3" aria-hidden="true"></i>
+                    <p class="text-xl font-bold text-gray-900 dark:text-white">No ads match these filters</p>
+                    <p class="text-gray-700 dark:text-gray-300 mt-1">Remove a filter above, or clear them all.</p>
+                    <button type="button" onclick="clearAll()" class="mt-4 clickable bg-haraj-blue text-white font-bold py-2.5 px-6 rounded-lg">Clear all filters</button></div>`;
+                return;
+            }
+            $('results').innerHTML = list.map(c => `
+                <a href="#" onclick="openCar(${c.id}); return false;" class="clickable flex gap-5 bg-white dark:bg-gray-900 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-lg ring-2 ring-transparent hover:ring-sky-500 transition">
+                    <div class="w-56 h-36 shrink-0 rounded-lg overflow-hidden bg-gray-200 dark:bg-gray-800">${c.imgs.length ? imgHTML(c.imgs[0], c.make + ' ' + c.model + ' ' + c.year) : placeholder('Photo placeholder').outerHTML}</div>
+                    <div class="flex-1 min-w-0 flex flex-col justify-between py-1">
+                        <div>
+                            <h3 class="font-bold text-xl text-gray-900 dark:text-white">${esc(c.make)} ${esc(c.model)} ${c.year}</h3>
+                            <p class="text-haraj-blue dark:text-sky-400 font-bold text-2xl mt-1">${fmt(c.price)} SR</p>
+                        </div>
+                        <p class="text-gray-700 dark:text-gray-300 text-base"><i class="fas fa-map-marker-alt text-red-600 dark:text-red-400 me-1" aria-hidden="true"></i> ${c.city} &bull; ${fmt(c.km)} KM &bull; ${c.cond} &bull; ${ago(c.hrs)}</p>
+                    </div>
+                </a>`).join('');
+        }
+
+        /* ---------- Ad detail ---------- */
+        function openCar(id) {
+            const c = CARS.find(x => x.id === id); const sl = SELLERS[c.seller];
+            $('d-title').textContent = c.make + ' ' + c.model + ' ' + c.year;
+            $('d-price').textContent = fmt(c.price) + ' SR';
+            $('d-odo').textContent = fmt(c.km) + ' KM';
+            $('d-loc').textContent = c.city + ' - ' + c.area;
+            $('d-cond').textContent = c.cond + '. ' + c.notes;
+            $('d-seller-name').textContent = sl.name; $('d-seller-initial').textContent = sl.name[0];
+            $('d-seller-rating').textContent = sl.rating + ' / 5'; $('d-seller-reviews').textContent = '(' + sl.reviews + ' reviews)';
+            $('d-seller-since').textContent = 'Haraj member since ' + sl.since;
+            const mk = $('crumb-make'), md = $('crumb-model');
+            mk.textContent = c.make; md.textContent = c.model;
+            mk.onclick = e => { e.preventDefault(); showResults({ reset: true, make: c.make }); };
+            md.onclick = e => { e.preventDefault(); showResults({ reset: true, make: c.make, model: c.model }); };
+            const alt = c.make + ' ' + c.model + ' ' + c.year;
+            const showImg = i => mountImg($('d-main'), c.imgs[i] || '', alt + ', photo ' + (i + 1));
+            showImg(0);
+            const th = $('d-thumbs'); th.innerHTML = '';
+            c.imgs.forEach((src, i) => {
+                const b = document.createElement('button'); b.type = 'button';
+                b.setAttribute('aria-label', 'Show photo ' + (i + 1) + ' of ' + c.imgs.length);
+                b.className = 'w-24 h-24 rounded-lg overflow-hidden border-2 ' + (i === 0 ? 'border-sky-500' : 'border-transparent') + ' hover:border-sky-400';
+                b.innerHTML = imgHTML(src.replace('w=800', 'w=200'), '');
+                b.onclick = () => { showImg(i); th.querySelectorAll('button').forEach((x, j) => x.className = x.className.replace(/border-sky-500|border-transparent/, j === i ? 'border-sky-500' : 'border-transparent')); };
+                th.appendChild(b);
+            });
+            navTo('screen-3');
+        }
+
+        /* ---------- Post Ad wizard ---------- */
+        const STEPS = ['Photos', 'Details', 'Price', 'Review'];
+        let step = 1; let photos = [];
+        function openPost() { resetWizard(); navTo('screen-4'); }
+        function resetWizard() {
+            step = 1; photos.forEach(p => URL.revokeObjectURL(p.url)); photos = []; renderPhotos();
+            $('a-make').innerHTML = opts(Object.keys(MODELS), 'Select make'); $('a-model').innerHTML = opts([], 'Select model');
+            const years = ['']; for (let y = 2025; y >= 2005; y--) years.push(y);
+            $('a-year').innerHTML = '<option value="">Select year</option>' + years.slice(1).map(y => `<option>${y}</option>`).join('');
+            $('a-dbrand').innerHTML = opts(Object.keys(DEVICES), 'Select brand'); $('a-dmodel').innerHTML = opts([], 'Select model');
+            $('a-dstorage').innerHTML = opts(STORAGE, 'Select storage');
+            $('a-city').innerHTML = opts(CITIES, 'Select city');
+            ['a-km', 'a-price', 'a-desc'].forEach(id => $(id).value = ''); $('desc-count').textContent = '0 / 500';
+            $('a-cat').value = 'cars'; onCatChange(); $('a-nego').checked = false;
+            $('price-preview').textContent = ''; $('price-warn').classList.add('hidden');
+            document.querySelectorAll('[id^="err-"]').forEach(e => e.classList.add('hidden'));
+            $('wiz-done').classList.add('hidden'); $('wiz-nav').classList.remove('hidden');
+            showStep(1, true);
+        }
+        function renderStepper() {
+            $('stepper').innerHTML = STEPS.map((s, i) => {
+                const n = i + 1, done = n < step, cur = n === step;
+                const circle = done ? 'bg-haraj-green text-white' : cur ? 'bg-haraj-blue text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-100';
+                const label = cur ? 'text-haraj-blue dark:text-sky-400' : 'text-gray-700 dark:text-gray-300';
+                return `<li class="flex-1 flex flex-col items-center relative" ${cur ? 'aria-current="step"' : ''}>
+                    <span class="w-10 h-10 rounded-full flex items-center justify-center font-bold ${circle}">${done ? '<i class="fas fa-check" aria-hidden="true"></i><span class="sr-only">Completed: </span>' : n}</span>
+                    <span class="mt-2 font-bold text-base ${label}">${s}</span></li>`;
+            }).join('');
+        }
+        function showStep(n, silent) {
+            step = n;
+            [1, 2, 3, 4].forEach(i => $('wiz-' + i).classList.toggle('hidden', i !== n));
+            $('wiz-back').classList.toggle('invisible', n === 1);
+            $('wiz-next-label').textContent = n === 4 ? 'Publish ad' : 'Next';
+            renderStepper();
+            if (n === 4) buildReview();
+            if (n === 3) checkPrice();
+            if (!silent) { const h = $('w' + n + '-h'); h.focus(); $('screen-4').scrollTop = 0; }
+        }
+        function wizBack() { if (step > 1) showStep(step - 1); }
+        function wizNext() {
+            if (step === 2 && !validateDetails()) return;
+            if (step === 3 && !validatePrice()) return;
+            if (step === 4) { ['wiz-4'].forEach(i => $(i).classList.add('hidden')); $('wiz-done').classList.remove('hidden'); $('wiz-nav').classList.add('hidden'); $('stepper').innerHTML = ''; $('wd-h').focus(); return; }
+            showStep(step + 1);
+        }
+        function onPhotos(input) {
+            [...input.files].forEach(f => { if (photos.length < 10) photos.push({ url: URL.createObjectURL(f), name: f.name }); });
+            input.value = ''; renderPhotos();
+        }
+        function renderPhotos() {
+            $('photo-list').innerHTML = photos.map((p, i) => `<li class="relative aspect-square rounded-lg overflow-hidden border border-gray-300 dark:border-gray-600">
+                <img src="${p.url}" alt="Uploaded photo ${i + 1}: ${esc(p.name)}" class="w-full h-full object-cover">
+                <button type="button" onclick="removePhoto(${i})" aria-label="Remove photo ${i + 1}" class="absolute top-1 end-1 w-8 h-8 rounded-full bg-gray-900 text-white hover:bg-red-700"><i class="fas fa-times" aria-hidden="true"></i></button></li>`).join('');
+        }
+        function removePhoto(i) { URL.revokeObjectURL(photos[i].url); photos.splice(i, 1); renderPhotos(); }
+        function onCatChange() { const cars = $('a-cat').value === 'cars'; $('fields-cars').classList.toggle('hidden', !cars); $('fields-devices').classList.toggle('hidden', cars); }
+        function onPostMakeChange() { $('a-model').innerHTML = opts(MODELS[$('a-make').value] || [], 'Select model'); }
+        function onDeviceBrandChange() { $('a-dmodel').innerHTML = opts(DEVICES[$('a-dbrand').value] || [], 'Select model'); }
+        function flag(id, bad) { $('err-' + id).classList.toggle('hidden', !bad); $(id).setAttribute('aria-invalid', String(bad)); return bad; }
+        function validateDetails() {
+            const cars = $('a-cat').value === 'cars';
+            const checks = cars ? ['a-make', 'a-model', 'a-year', 'a-km', 'a-city'] : ['a-dbrand', 'a-dmodel', 'a-dstorage', 'a-city'];
+            let first = null;
+            checks.forEach(id => { if (flag(id, !$(id).value.trim()) && !first) first = id; });
+            if (first) { $(first).focus(); return false; }
+            return true;
+        }
+        function currentModel() { return $('a-cat').value === 'cars' ? $('a-model').value : $('a-dmodel').value; }
+        function checkPrice() {
+            const p = +digits($('a-price').value); const w = $('price-warn');
+            $('price-preview').textContent = p ? 'Buyers will see: ' + fmt(p) + ' SR' : '';
+            w.classList.add('hidden'); if (!p) return;
+            const r = RANGES[currentModel()] || [1000, 2000000];
+            if (p < r[0] || p > r[1]) {
+                w.innerHTML = '<i class="fas fa-exclamation-triangle me-2" aria-hidden="true"></i>This is outside the typical range for ' + esc(currentModel() || 'this item') + ' (' + fmt(r[0]) + ' to ' + fmt(r[1]) + ' SR). Check for an extra or missing zero. You can still continue.';
+                w.classList.remove('hidden');
+            }
+        }
+        function validatePrice() {
+            const bad = flag('a-price', !+digits($('a-price').value));
+            if (bad) $('a-price').focus(); return !bad;
+        }
+        function buildReview() {
+            const cars = $('a-cat').value === 'cars';
+            const title = cars ? $('a-make').value + ' ' + $('a-model').value + ' ' + $('a-year').value : $('a-dmodel').value + ' ' + $('a-dstorage').value;
+            const rows = cars
+                ? [['Category', 'Cars'], ['Odometer', $('a-km').value + ' KM'], ['Condition', document.querySelector('input[name="a-cond"]:checked').value]]
+                : [['Category', 'Devices'], ['Brand', $('a-dbrand').value], ['Storage', $('a-dstorage').value], ['Condition', document.querySelector('input[name="d-cond"]:checked').value]];
+            rows.push(['City', $('a-city').value], ['Photos', photos.length ? photos.length + ' added' : 'None added']);
+            if ($('a-desc').value.trim()) rows.push(['Description', $('a-desc').value.trim()]);
+            $('review').innerHTML = `<h3 class="text-3xl font-bold text-gray-900 dark:text-white">${esc(title)}</h3>
+                <p class="text-3xl font-bold text-haraj-blue dark:text-sky-400 mt-1 mb-5">${fmt(digits($('a-price').value))} SR${$('a-nego').checked ? ' <span class="text-lg font-semibold text-gray-700 dark:text-gray-300">(negotiable)</span>' : ''}</p>
+                <dl class="grid grid-cols-[10rem_1fr] gap-y-3 text-lg">${rows.map(r => `<dt class="font-bold text-gray-800 dark:text-gray-200">${r[0]}</dt><dd class="text-gray-900 dark:text-gray-100 break-words">${esc(r[1])}</dd>`).join('')}</dl>
+                <button type="button" onclick="showStep(2)" class="mt-6 text-haraj-blue dark:text-sky-400 font-bold underline text-lg">Edit details</button>`;
+        }
+
+        /* ---------- Init ---------- */
+        initFilters(); render();
+    </script>
+</body>
+</html>
