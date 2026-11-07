@@ -734,7 +734,7 @@
         const STEPS = ['Photos', 'Details', 'Price', 'Review'];
         let step = 1; let photos = [];
         function openPost() { resetWizard(); navTo('screen-4'); }
-        function resetWizard() {
+function resetWizard() {
             step = 1; photos.forEach(p => URL.revokeObjectURL(p.url)); photos = []; renderPhotos();
             $('a-make').innerHTML = opts(Object.keys(MODELS), 'Select make'); $('a-model').innerHTML = opts([], 'Select model');
             const years = ['']; for (let y = 2025; y >= 2005; y--) years.push(y);
@@ -742,7 +742,8 @@
             $('a-dbrand').innerHTML = opts(Object.keys(DEVICES), 'Select brand'); $('a-dmodel').innerHTML = opts([], 'Select model');
             $('a-dstorage').innerHTML = opts(STORAGE, 'Select storage');
             $('a-city').innerHTML = opts(CITIES, 'Select city');
-            ['a-km', 'a-price', 'a-desc'].forEach(id => $(id).value = ''); $('desc-count').textContent = '0 / 500';
+            $('a-odo').value = 85000; $('a-odo-val').textContent = '85,000 KM';
+            ['a-price', 'a-desc'].forEach(id => $(id).value = ''); $('desc-count').textContent = '0 / 500';
             $('a-cat').value = 'cars'; onCatChange(); $('a-nego').checked = false;
             $('price-preview').textContent = ''; $('price-warn').classList.add('hidden');
             document.querySelectorAll('[id^="err-"]').forEach(e => e.classList.add('hidden'));
