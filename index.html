@@ -381,10 +381,10 @@
                             <select id="a-year" aria-describedby="err-a-year" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg p-3 text-base bg-gray-50 dark:bg-gray-800 dark:text-white"></select>
                             <p id="err-a-year" role="alert" class="hidden mt-1 text-sm font-semibold text-red-700 dark:text-red-300">Choose a year.</p>
                         </div>
-           <div>
+<div>
     <div class="flex justify-between items-center mb-1">
         <label for="a-odo" class="block text-base font-bold text-gray-800 dark:text-gray-200">Odometer (KM) *</label>
-        <span id="a-odo-val" class="text-sm font-bold text-haraj-blue dark:text-[#38bdf8]">85,000 KM</span>
+        <span id="a-odo-val" class="text-sm font-bold text-haraj-blue dark:text-[#38bdf8]">0 KM</span>
     </div>
     <input 
         id="a-odo" 
@@ -392,10 +392,10 @@
         min="0" 
         max="300000" 
         step="5000" 
-        value="85000" 
+        value="0" 
         aria-describedby="err-a-odo"
-        oninput="document.getElementById('a-odo-val').innerText = Number(this.value).toLocaleString() + ' KM'"
-        class="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-[#0F7493] dark:accent-[#38bdf8]"
+        oninput="updateOdoSlider(this)"
+        class="w-full h-3 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-[#0F7493] dark:accent-[#38bdf8]"
     >
     <div class="flex justify-between text-xs text-gray-400 mt-1">
         <span>0 KM</span>
@@ -810,6 +810,17 @@ function resetWizard() {
                 w.classList.remove('hidden');
             }
         }
+        function updateOdoSlider(el) {
+    const val = Number(el.value);
+    $('a-odo-val').innerText = val.toLocaleString() + ' KM';
+    const pct = (val / el.max) * 100;
+    el.style.background = `linear-gradient(to right, #0F7493 ${pct}%, #E5E7EB ${pct}%)`;
+}
+// Initialize slider fill on load/reset
+document.addEventListener('DOMContentLoaded', () => {
+    const s = $('a-odo');
+    if (s) updateOdoSlider(s);
+}
         function validatePrice() {
             const bad = flag('a-price', !+digits($('a-price').value));
             if (bad) $('a-price').focus(); return !bad;
