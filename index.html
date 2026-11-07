@@ -341,7 +341,7 @@
             <h1 tabindex="-1" class="text-2xl font-bold text-gray-800 dark:text-white">Post Ad</h1>
             <div class="flex items-center gap-3">
                 <div data-a11y></div>
-                <button type="button" onclick="goBack('screen-1')" class="clickable text-gray-700 dark:text-gray-300 font-bold hover:text-gray-900 dark:hover:text-white px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition text-lg">Cancel</button>
+                <button type="button" onclick="goBack('screen-1')" class="clickable bg-red-700 text-white px-5 py-2.5 rounded-lg font-semibold hover:bg-red-800 shadow-md">Cancel</button>
             </div>
         </header>
 
@@ -395,7 +395,7 @@
                                 <label for="a-odo" class="block text-base font-bold text-gray-800 dark:text-gray-200">Odometer (KM) *</label>
                                 <output id="a-odo-val" for="a-odo" class="text-base font-bold text-haraj-blue dark:text-sky-400">85,000 KM</output>
                             </div>
-                            <input id="a-odo" type="range" min="0" max="300000" step="5000" value="85000" aria-describedby="err-a-odo" oninput="updateOdoSlider(this)" class="odo">
+                            <input id="a-odo" type="range" min="0" max="300000" step="5000" value="0" aria-describedby="err-a-odo" oninput="updateOdoSlider(this)" class="odo">
                             <div class="flex justify-between text-sm text-gray-700 dark:text-gray-300 mt-1"><span>0 KM</span><span>300,000+ KM</span></div>
                             <p id="err-a-odo" role="alert" class="hidden mt-1 text-sm font-semibold text-red-700 dark:text-red-300">A used car cannot have 0 KM. Move the slider to the odometer reading.</p>
                         </div>
@@ -738,7 +738,7 @@ function resetWizard() {
             $('a-dbrand').innerHTML = opts(Object.keys(DEVICES), 'Select brand'); $('a-dmodel').innerHTML = opts([], 'Select model');
             $('a-dstorage').innerHTML = opts(STORAGE, 'Select storage');
             $('a-city').innerHTML = opts(CITIES, 'Select city');
-            $('a-odo').value = 85000; updateOdoSlider($('a-odo'));
+            $('a-odo').value = 0; updateOdoSlider($('a-odo'));
             ['a-price', 'a-desc'].forEach(id => $(id).value = ''); $('desc-count').textContent = '0 / 500';
             $('a-cat').value = 'cars'; onCatChange(); $('a-nego').checked = false;
             $('price-preview').textContent = ''; $('price-warn').classList.add('hidden');
