@@ -382,13 +382,25 @@
                             <p id="err-a-year" role="alert" class="hidden mt-1 text-sm font-semibold text-red-700 dark:text-red-300">Choose a year.</p>
                         </div>
                         <div>
-                            <label for="a-km" class="block text-base font-bold text-gray-800 dark:text-gray-200 mb-1">Odometer *</label>
-                            <div class="relative">
-                                <input id="a-km" type="text" inputmode="numeric" autocomplete="off" aria-describedby="err-a-km" onchange="onNumInput(this)" oninput="onNumInput(this)" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg p-3 pe-14 text-base bg-gray-50 dark:bg-gray-800 dark:text-white">
-                                <span class="absolute end-4 top-3 text-gray-700 dark:text-gray-300 font-semibold" aria-hidden="true">KM</span>
-                            </div>
-                            <p id="err-a-km" role="alert" class="hidden mt-1 text-sm font-semibold text-red-700 dark:text-red-300">Enter the odometer reading in kilometres.</p>
-                        </div>
+    <div class="flex justify-between items-center mb-1">
+        <label for="odometer-slider" class="text-sm font-bold text-gray-700 dark:text-gray-300">Odometer (Max KM)</label>
+        <span id="odometer-value" class="text-sm font-bold text-haraj-blue dark:text-[#38bdf8]">100,000 KM</span>
+    </div>
+    <input 
+        id="odometer-slider" 
+        type="range" 
+        min="0" 
+        max="300000" 
+        step="5000" 
+        value="100000" 
+        oninput="document.getElementById('odometer-value').innerText = Number(this.value).toLocaleString() + ' KM'"
+        class="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-[#0F7493] dark:accent-[#38bdf8]"
+    >
+    <div class="flex justify-between text-xs text-gray-400 mt-1">
+        <span>0 KM</span>
+        <span>300,000+ KM</span>
+    </div>
+</div>
                         <fieldset class="col-span-1">
                             <legend class="block text-base font-bold text-gray-800 dark:text-gray-200 mb-2">Condition *</legend>
                             <div class="flex gap-6 text-base dark:text-gray-100">
