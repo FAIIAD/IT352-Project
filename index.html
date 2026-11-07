@@ -65,7 +65,16 @@
         .haraj-logo-img { height: 40px; width: auto; object-fit: contain; }
         input::placeholder { color: #6B7280; }
         .dark input::placeholder { color: #9CA3AF; }
-        h1[tabindex="-1"]:focus { outline: none; }
+        [tabindex="-1"]:focus { outline: none; }
+
+        /* Odometer slider: custom track fill + visible thumb */
+        .odo { -webkit-appearance: none; appearance: none; width: 100%; height: 12px; border-radius: 9999px; cursor: pointer;
+               --fill: #0F7493; --track: #9CA3AF; --pct: 28.3%;
+               background: linear-gradient(to right, var(--fill) var(--pct), var(--track) var(--pct)); }
+        .dark .odo { --fill: #38bdf8; --track: #6B7280; }
+        .odo::-webkit-slider-thumb { -webkit-appearance: none; width: 28px; height: 28px; border-radius: 50%; background: #fff; border: 4px solid var(--fill); box-shadow: 0 1px 4px rgba(0,0,0,.45); }
+        .odo::-moz-range-thumb { width: 20px; height: 20px; border-radius: 50%; background: #fff; border: 4px solid var(--fill); box-shadow: 0 1px 4px rgba(0,0,0,.45); }
+        .odo::-moz-range-track { background: transparent; }
     </style>
 </head>
 <body class="text-gray-900 dark:text-gray-100">
@@ -382,27 +391,14 @@
                             <p id="err-a-year" role="alert" class="hidden mt-1 text-sm font-semibold text-red-700 dark:text-red-300">Choose a year.</p>
                         </div>
 <div>
-    <div class="flex justify-between items-center mb-1">
-        <label for="a-odo" class="block text-base font-bold text-gray-800 dark:text-gray-200">Odometer (KM) *</label>
-        <span id="a-odo-val" class="text-sm font-bold text-haraj-blue dark:text-[#38bdf8]">0 KM</span>
-    </div>
-    <input 
-        id="a-odo" 
-        type="range" 
-        min="0" 
-        max="300000" 
-        step="5000" 
-        value="0" 
-        aria-describedby="err-a-odo"
-        oninput="updateOdoSlider(this)"
-        class="w-full h-3 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-[#0F7493] dark:accent-[#38bdf8]"
-    >
-    <div class="flex justify-between text-xs text-gray-400 mt-1">
-        <span>0 KM</span>
-        <span>300,000+ KM</span>
-    </div>
-    <p id="err-a-odo" role="alert" class="hidden mt-1 text-sm font-semibold text-red-700 dark:text-red-300">Enter odometer reading.</p>
-</div>
+                            <div class="flex justify-between items-center mb-2">
+                                <label for="a-odo" class="block text-base font-bold text-gray-800 dark:text-gray-200">Odometer (KM) *</label>
+                                <output id="a-odo-val" for="a-odo" class="text-base font-bold text-haraj-blue dark:text-sky-400">85,000 KM</output>
+                            </div>
+                            <input id="a-odo" type="range" min="0" max="300000" step="5000" value="85000" aria-describedby="err-a-odo" oninput="updateOdoSlider(this)" class="odo">
+                            <div class="flex justify-between text-sm text-gray-700 dark:text-gray-300 mt-1"><span>0 KM</span><span>300,000+ KM</span></div>
+                            <p id="err-a-odo" role="alert" class="hidden mt-1 text-sm font-semibold text-red-700 dark:text-red-300">A used car cannot have 0 KM. Move the slider to the odometer reading.</p>
+                        </div>
                         <fieldset class="col-span-1">
                             <legend class="block text-base font-bold text-gray-800 dark:text-gray-200 mb-2">Condition *</legend>
                             <div class="flex gap-6 text-base dark:text-gray-100">
@@ -742,7 +738,7 @@ function resetWizard() {
             $('a-dbrand').innerHTML = opts(Object.keys(DEVICES), 'Select brand'); $('a-dmodel').innerHTML = opts([], 'Select model');
             $('a-dstorage').innerHTML = opts(STORAGE, 'Select storage');
             $('a-city').innerHTML = opts(CITIES, 'Select city');
-            $('a-odo').value = 85000; $('a-odo-val').textContent = '85,000 KM';
+            $('a-odo').value = 85000; updateOdoSlider($('a-odo'));
             ['a-price', 'a-desc'].forEach(id => $(id).value = ''); $('desc-count').textContent = '0 / 500';
             $('a-cat').value = 'cars'; onCatChange(); $('a-nego').checked = false;
             $('price-preview').textContent = ''; $('price-warn').classList.add('hidden');
@@ -793,9 +789,11 @@ function resetWizard() {
         function flag(id, bad) { $('err-' + id).classList.toggle('hidden', !bad); $(id).setAttribute('aria-invalid', String(bad)); return bad; }
         function validateDetails() {
             const cars = $('a-cat').value === 'cars';
-            const checks = cars ? ['a-make', 'a-model', 'a-year', 'a-km', 'a-city'] : ['a-dbrand', 'a-dmodel', 'a-dstorage', 'a-city'];
+            const used = document.querySelector('input[name="a-cond"]:checked').value === 'Used';
+            const fields = cars ? ['a-make', 'a-model', 'a-year', 'a-odo', 'a-city'] : ['a-dbrand', 'a-dmodel', 'a-dstorage', 'a-city'];
+            const isBad = id => id === 'a-odo' ? (+$(id).value === 0 && used) : !$(id).value.trim();
             let first = null;
-            checks.forEach(id => { if (flag(id, !$(id).value.trim()) && !first) first = id; });
+            fields.forEach(id => { if (flag(id, isBad(id)) && !first) first = id; });
             if (first) { $(first).focus(); return false; }
             return true;
         }
@@ -811,16 +809,11 @@ function resetWizard() {
             }
         }
         function updateOdoSlider(el) {
-    const val = Number(el.value);
-    $('a-odo-val').innerText = val.toLocaleString() + ' KM';
-    const pct = (val / el.max) * 100;
-    el.style.background = `linear-gradient(to right, #0F7493 ${pct}%, #E5E7EB ${pct}%)`;
-}
-// Initialize slider fill on load/reset
-document.addEventListener('DOMContentLoaded', () => {
-    const s = $('a-odo');
-    if (s) updateOdoSlider(s);
-}
+            const v = Number(el.value);
+            $('a-odo-val').textContent = fmt(v) + ' KM';
+            el.style.setProperty('--pct', (v / Number(el.max) * 100) + '%');
+            el.setAttribute('aria-valuetext', fmt(v) + ' kilometres');
+        }
         function validatePrice() {
             const bad = flag('a-price', !+digits($('a-price').value));
             if (bad) $('a-price').focus(); return !bad;
@@ -829,7 +822,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const cars = $('a-cat').value === 'cars';
             const title = cars ? $('a-make').value + ' ' + $('a-model').value + ' ' + $('a-year').value : $('a-dmodel').value + ' ' + $('a-dstorage').value;
             const rows = cars
-                ? [['Category', 'Cars'], ['Odometer', $('a-km').value + ' KM'], ['Condition', document.querySelector('input[name="a-cond"]:checked').value]]
+                ? [['Category', 'Cars'], ['Odometer', fmt($('a-odo').value) + ' KM'], ['Condition', document.querySelector('input[name="a-cond"]:checked').value]]
                 : [['Category', 'Devices'], ['Brand', $('a-dbrand').value], ['Storage', $('a-dstorage').value], ['Condition', document.querySelector('input[name="d-cond"]:checked').value]];
             rows.push(['City', $('a-city').value], ['Photos', photos.length ? photos.length + ' added' : 'None added']);
             if ($('a-desc').value.trim()) rows.push(['Description', $('a-desc').value.trim()]);
@@ -840,7 +833,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         /* ---------- Init ---------- */
-        initFilters(); render();
+        initFilters(); render(); updateOdoSlider($('a-odo'));
     </script>
 </body>
 </html>
